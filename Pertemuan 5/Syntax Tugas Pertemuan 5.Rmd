@@ -1,0 +1,213 @@
+---
+title: "Tugas Pertemuan 5 MPDW"
+author: "Radhitya Harma"
+date: "2023-09-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Library / Packages
+
+*Package* R yang akan digunakan pada perkuliahan Analisis Deret Waktu sesi UTS adalah: `forecast`, `graphics`, `TTR`, `TSA` . Jika *package* tersebut belum ada, silakan install terlebih dahulu.
+
+```{r}
+library(ggplot2)
+library(tsibble) #bikin tabel
+library(tseries)
+library(MASS) #uji stasioneritas ragam
+```
+
+Jika sudah ada, silakan panggil library *package* tersebut.
+
+```{r}
+library("forecast")
+library("graphics")
+library("TTR")
+library("TSA")
+```
+
+## Impor Data
+
+```{r}
+#install.packages("rio") #install jika belum ada
+library(rio)
+databaru <- import("https://raw.githubusercontent.com/RadhityaHarma12/MPDW/main/Pertemuan%205/databaru.csv")
+databaru
+```
+
+```{r}
+str(databaru)
+dim(databaru)
+```
+
+## Data Penuh
+
+### Time Series
+
+Mengubah data agar terbaca sebagai data deret waktu dengan fungsi `ts()` .
+
+```{r}
+databaru.ts <- ts(databaru$x)
+```
+
+Menampilkan ringkasan data
+
+```{r}
+summary(databaru.ts)
+```
+
+```{r}
+plot_databaru <- databaru.ts |> as_tsibble() |> 
+  ggplot(aes(x = databaru$periode, y = databaru$x)) + geom_line() + theme_bw() +
+  xlab("Tahun") + ylab("Nilai")
+plot_databaru
+mean(databaru.ts)
+```
+
+Plot deret waktu di atas pada data penuh menunjukkan bahwa data tidak stasioner dalam rataan, ditandai dengan data yang menyebar di sekitar nilai tengahnya yang bernilai 239330.9 dan juga tidak stasioner dalam ragam, ditandai dengan lebar pita yang cenderung tidak sama.
+
+### Plot ACF
+
+```{r}
+acf(databaru.ts)
+```
+
+Berdasarkan plot ACF, terlihat bahwa plot ACF pada data tersebut cenderung *tails off* slowly maka data tersebut terindikasi tidak stasioner
+
+### Uji ADF
+
+```{r}
+tseries::adf.test(databaru.ts, k=6)
+```
+
+$H_0$ : Data tidak stasioner dalam rataan
+
+$H_1$ : Data stasioner dalam rataan
+
+Berdasarkan uji ADF tersebut, didapat *p-value* sebesar 0.1313 yang lebih besar dari taraf nyata 5% sehingga terima $H_0$ dan menandakan bahwa data tidak stasioner dalam rataan. Hal ini sesuai dengan hasil eksplorasi menggunakan plot time series dan plot ACF.
+
+### Plot Box-Cox
+
+```{r}
+index <- seq(1:120) #sebanyak row data
+bc = boxcox(databaru.ts~index, lambda = seq(-3,2,by=0.01)) 
+#Nilai Rounded Lambda
+lambda <- bc$x[which.max(bc$y)]
+lambda
+#SK
+bc$x[bc$y > max(bc$y) - 1/2 * qchisq(.95,1)]
+```
+
+Gambar di atas menunjukkan nilai *rounded value* ($\lambda$) optimum sebesar **-0,17** dan pada selang kepercayaan 95% nilai memiliki batas bawah **-0,44** dan batas atas **0,10**. Selang tersebut tidak memuat nilai 1 sehingga dapat dikatakan bahwa data tersebut **tidak stasioner dalam ragam**.
+
+## Partisi Data Part 1
+
+### Time Series
+
+```{r}
+databaru1 <- databaru.ts[1:60]
+databaru1
+mean(databaru1)
+var(databaru1)
+
+```
+
+```{r}
+ts.plot(databaru1, xlab="Time Period ", ylab="Volume Saham", 
+        main = "Time Series Plot Part 1")
+points(databaru1)
+```
+
+Plot deret waktu di atas pada data partisi 1 menunjukkan bahwa data tidak stasioner dalam rataan, ditandai dengan data yang menyebar di sekitar nilai tengahnya yang bernilai 148104.1 dan juga tidak stasioner dalam ragam, ditandai dengan lebar pita yang cenderung tidak sama.
+
+### 
+
+### Plot ACF
+
+```{r}
+acf(databaru1)
+```
+
+Berdasarkan plot ACF, terlihat bahwa plot ACF pada data partisi 1 tersebut cenderung *tails off* slowly maka data tersebut terindikasi tidak stasioner
+
+### Uji ADF
+
+```{r}
+tseries::adf.test(databaru1)
+```
+
+$H_0$ : Data tidak stasioner dalam rataan
+
+$H_1$ : Data stasioner dalam rataan
+
+Berdasarkan uji ADF tersebut, didapat *p-value* sebesar 0.1799 yang lebih besar dari taraf nyata 5% sehingga terima $H_0$ dan menandakan bahwa data tidak stasioner dalam rataan. Hal ini sesuai dengan hasil eksplorasi menggunakan plot time series dan plot ACF.
+
+### Plot Box-Cox
+
+```{r}
+index <- seq(1:60) #sebanyak row data
+bc = boxcox(databaru1~index, lambda = seq(-3,2,by=0.01)) 
+#Nilai Rounded Lambda
+lambda <- bc$x[which.max(bc$y)]
+lambda
+#SK
+bc$x[bc$y > max(bc$y) - 1/2 * qchisq(.95,1)]
+```
+
+Gambar di atas menunjukkan nilai *rounded value* ($\lambda$) optimum sebesar **-0,93** dan pada selang kepercayaan 95% nilai memiliki batas bawah **-1,55** dan batas atas **-0,35**. Selang tersebut tidak memuat nilai 1 sehingga dapat dikatakan bahwa data tersebut **tidak stasioner dalam ragam**.
+
+## Partisi Data Part 2
+
+### Time Series
+
+```{r}
+databaru2 <- databaru.ts[1:105]
+databaru2
+mean(databaru2)
+var(databaru2)
+```
+
+```{r}
+ts.plot(databaru2, xlab="Time Period ", ylab="Volume Saham", 
+        main = "Time Series Plot Part 2")
+points(databaru2)
+```
+
+Plot deret waktu di atas pada data partisi 2 menunjukkan bahwa data tidak stasioner dalam rataan, ditandai dengan data yang menyebar di sekitar nilai tengahnya yang bernilai 203002.2 dan juga tidak stasioner dalam ragam ditandai dengan lebar pita yang cenderung tidak sama.
+
+### Plot ACF
+
+```{r}
+acf(databaru2)
+```
+
+Berdasarkan plot ACF, terlihat bahwa plot ACF pada data partisi 2 tersebut cenderung *tails off* slowly maka data tersebut terindikasi tidak stasioner.
+
+### Uji ADF
+
+```{r}
+tseries::adf.test(databaru2, k = 6)
+```
+
+$H_0$ : Data tidak stasioner dalam rataan
+
+$H_1$ : Data stasioner dalam rataan
+
+Berdasarkan uji ADF tersebut, didapat *p-value* sebesar 0.1129 yang lebih besar dari taraf nyata 5% sehingga terima $H_0$ dan menandakan bahwa data tidak stasioner dalam rataan. Hal ini sesuai dengan hasil eksplorasi menggunakan plot time series dan plot ACF.
+
+### Plot Box-Cox
+
+```{r}
+index <- seq(1:105) #sebanyak row data
+bc = boxcox(databaru2~index, lambda = seq(-3,2,by=0.01)) 
+#Nilai Rounded Lambda
+lambda <- bc$x[which.max(bc$y)]
+lambda
+#SK
+bc$x[bc$y > max(bc$y) - 1/2 * qchisq(.95,1)]
+```
+
+Gambar di atas menunjukkan nilai *rounded value* ($\lambda$) optimum sebesar **-0,35** dan pada selang kepercayaan 95% nilai memiliki batas bawah **-0,70** dan batas atas **-0,01**. Selang tersebut tidak memuat nilai 1 sehingga dapat dikatakan bahwa data tersebut **tidak stasioner dalam ragam**.
